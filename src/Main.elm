@@ -2,7 +2,7 @@ port module Main exposing (main)
 
 import Browser
 import Html exposing (..)
-import Html.Attributes exposing (disabled, placeholder, style, value)
+import Html.Attributes exposing (class, disabled, placeholder, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as Decode
 
@@ -83,21 +83,25 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div [ style "max-width" "400px", style "margin" "2rem auto" ]
-        [ div [ style "display" "flex", style "gap" "0.5rem" ]
-            [ input
-                [ placeholder "What needs doing?"
-                , value model.newTodo
-                , onInput NewTodoInput
+    div []
+        [ fieldset [ class "filedset" ]
+            [ label []
+                [ input
+                    [ placeholder "What needs doing?"
+                    , value model.newTodo
+                    , onInput NewTodoInput
+                    ]
+                    []
                 ]
-                []
             , button
                 [ onClick SubmitTodo
                 , disabled (String.trim model.newTodo == "")
                 ]
                 [ text "Add" ]
             ]
-        , ul [] (List.map (\t -> li [] [ text t ]) model.todos)
+        , ul
+            []
+            (List.map (\t -> li [] [ text t ]) model.todos)
         ]
 
 
