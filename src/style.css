@@ -1,22 +1,36 @@
 body {
   margin: 0;
-  background: linear-gradient(180deg, rgb(117, 81, 194), rgb(255, 255, 255));
-  display: flex;
+  background: royalblue;
+  display: grid;
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  /* height: 100vh; */
+  height: 100vh;
   width: 100vw;
   justify-content: center;
   align-items: center;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 main {
-  display: flex;
+  /* display: flex;
   flex-direction: column;
-  align-items: stretch;
+  align-items: stretch; */
 }
-
+fieldset {
+  border: 0;
+  padding-inline: 0;
+  padding-block: 0;
+  display: flex;
+  align-items: center;
+}
+input {
+  border-radius: 8px 0 0 8px;
+  border: 1px solid transparent;
+  padding: 0.8em 1.2em;
+}
 button {
-  border-radius: 8px;
+  border-radius: 0 8px 8px 0;
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
   font-size: 1em;
