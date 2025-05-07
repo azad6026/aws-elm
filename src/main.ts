@@ -18,7 +18,10 @@ const app = Elm.Main.init({
 if (app.ports.getTodos) {
   app.ports.getTodos.subscribe(async () => {
     const result = await client.models.Todo.list();
-    const todos = result.data.map((t) => t.content ?? "");
+    const todos = result.data.map((t) => ({
+      id: t.id,
+      content: t.content ?? "",
+    }));
     app.ports.receiveTodos.send(todos);
   });
 }
@@ -30,6 +33,14 @@ if (app.ports.createTodo) {
     if (result.data) {
       // push just the new item back into Elm:
       app.ports.newTodoCreated.send(result.data.content!);
+    }
+  });
+}
+if (app.ports.removeTodo) {
+  app.ports.removeTodo.subscribe(async (id: string) => {
+    const result = await client.models.Todo.delete({ id });
+    if (result.data && app.ports.todoDeleted) {
+      app.ports.todoDeleted.send(id);
     }
   });
 }
