@@ -4,15 +4,22 @@ import Browser
 import Html exposing (..)
 import Html.Attributes exposing (class, disabled, placeholder, value)
 import Html.Events exposing (onClick, onInput)
-import Json.Decode as Decode
+import Json.Decode as Decode exposing (Decoder)
+import Json.Decode.Pipeline as Pipeline
 
 
 
 -- MODEL
 
 
+type alias Todo =
+    { id : String
+    , content : String
+    }
+
+
 type alias Model =
-    { todos : List String
+    { todos : List Todo
     , newTodo : String
     }
 
@@ -29,9 +36,11 @@ init _ =
 
 
 type Msg
-    = GotTodos (List String)
-    | NewTodoCreated String
+    = GotTodos (List Todo)
+    | NewTodoCreated Todo
     | NewTodoInput String
+    | RemoveTodo String
+    | TodoDeleted String
     | SubmitTodo
 
 
@@ -45,10 +54,16 @@ port getTodos : () -> Cmd msg
 port createTodo : String -> Cmd msg
 
 
+port removeTodo : String -> Cmd msg
+
+
 port receiveTodos : (Decode.Value -> msg) -> Sub msg
 
 
-port newTodoCreated : (String -> msg) -> Sub msg
+port newTodoCreated : (Decode.Value -> msg) -> Sub msg
+
+
+port todoDeleted : (String -> msg) -> Sub msg
 
 
 
@@ -61,11 +76,17 @@ update msg model =
         GotTodos list ->
             ( { model | todos = list }, Cmd.none )
 
-        NewTodoCreated item ->
-            ( { model | todos = model.todos ++ [ item ] }, Cmd.none )
+        NewTodoCreated todo ->
+            ( { model | todos = model.todos ++ [ todo ] }, Cmd.none )
 
         NewTodoInput str ->
             ( { model | newTodo = str }, Cmd.none )
+
+        RemoveTodo id ->
+            ( model, removeTodo id )
+
+        TodoDeleted id ->
+            ( { model | todos = List.filter (\t -> t.id /= id) model.todos }, Cmd.none )
 
         SubmitTodo ->
             if String.trim model.newTodo == "" then
@@ -84,7 +105,7 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div []
-        [ fieldset [ class "filedset" ]
+        [ fieldset [ class "fieldset" ]
             [ label []
                 [ input
                     [ placeholder "What needs doing?"
@@ -99,9 +120,15 @@ view model =
                 ]
                 [ text "Add" ]
             ]
-        , ul
-            []
-            (List.map (\t -> li [] [ text t ]) model.todos)
+        , ul [] (List.map viewTodo model.todos)
+        ]
+
+
+viewTodo : Todo -> Html Msg
+viewTodo todo =
+    li []
+        [ button [ onClick (RemoveTodo todo.id) ] [ text "Remove" ]
+        , text (" " ++ todo.content)
         ]
 
 
@@ -114,15 +141,31 @@ subscriptions _ =
     Sub.batch
         [ receiveTodos
             (\value ->
-                case Decode.decodeValue (Decode.list Decode.string) value of
+                case Decode.decodeValue (Decode.list todoDecoder) value of
                     Ok list ->
                         GotTodos list
 
                     Err _ ->
                         GotTodos []
             )
-        , newTodoCreated NewTodoCreated
+        , newTodoCreated
+            (\value ->
+                case Decode.decodeValue todoDecoder value of
+                    Ok todo ->
+                        NewTodoCreated todo
+
+                    Err _ ->
+                        GotTodos []
+            )
+        , todoDeleted TodoDeleted
         ]
+
+
+todoDecoder : Decoder Todo
+todoDecoder =
+    Decode.succeed Todo
+        |> Pipeline.required "id" Decode.string
+        |> Pipeline.required "content" Decode.string
 
 
 
